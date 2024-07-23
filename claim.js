@@ -7,7 +7,6 @@ const nacl = require('tweetnacl');
 const { connection } = require('./src/solanaUtils');
 const { HEADERS } = require('./src/headers');
 const { displayHeader } = require('./src/displayUtils');
-const readlineSync = require('readline-sync');
 const moment = require('moment');
 
 const PRIVATE_KEYS = JSON.parse(fs.readFileSync('privateKeys.json', 'utf-8'));
@@ -33,9 +32,7 @@ async function getToken(privateKey) {
     );
     const signature = Buffer.from(sign).toString('base64');
     const publicKey = getKeypair(privateKey).publicKey;
-    const encodedPublicKey = Buffer.from(publicKey.toBytes()).toString(
-      'base64'
-    );
+    const encodedPublicKey = Buffer.from(publicKey.toBytes()).toString('base64');
     const response = await axios({
       url: 'https://odyssey-api-beta.sonic.game/auth/sonic/authorize',
       method: 'POST',
@@ -119,100 +116,6 @@ async function openMysteryBox(token, keypair, retries = 3) {
       throw error;
     }
   }
-}
-
-async function processPrivateKey(privateKey) {
-  try {
-    const publicKey = getKeypair(privateKey).publicKey.toBase58();
-    const token = await getToken(privateKey);
-    const profile = await getProfile(token);
-
-    if (profile.wallet_balance > 0) {
-      const balance = profile.wallet_balance / solana.LAMPORTS_PER_SOL;
-      const ringBalance = profile.ring;
-      const availableBoxes = profile.ring_monitor;
-      console.log(
-        `Hello ${publicKey}! Welcome to our bot. Here are your details:`.green
-      );
-      console.log(`Solana Balance: ${balance} SOL`.green);
-      console.log(`Ring Balance: ${ringBalance}`.green);
-      console.log(`Available Box(es): ${availableBoxes}`.green);
-      console.log('');
-
-      const method = readlineSync.question(
-        'Select input method (1 for claim box, 2 for open box, 3 for daily login): '
-      );
-
-      if (method === '1') {
-        console.log(`[ ${moment().format('HH:mm:ss')} ] Please wait...`.yellow);
-        await dailyClaim(token);
-        console.log(
-          `[ ${moment().format('HH:mm:ss')} ] All tasks completed!`.cyan
-        );
-      } else if (method === '2') {
-        let totalClaim;
-        do {
-          totalClaim = readlineSync.question(
-            `How many boxes do you want to open? (Maximum is: ${availableBoxes}): `
-              .blue
-          );
-
-          if (totalClaim > availableBoxes) {
-            console.log(`You cannot open more boxes than available`.red);
-          } else if (isNaN(totalClaim)) {
-            console.log(`Please enter a valid number`.red);
-          } else {
-            console.log(
-              `[ ${moment().format('HH:mm:ss')} ] Please wait...`.yellow
-            );
-            for (let i = 0; i < totalClaim; i++) {
-              const openedBox = await openMysteryBox(
-                token,
-                getKeypair(privateKey)
-              );
-              if (openedBox.data.success) {
-                console.log(
-                  `[ ${moment().format(
-                    'HH:mm:ss'
-                  )} ] Box opened successfully! Status: ${
-                    openedBox.status
-                  } | Amount: ${openedBox.data.amount}`.green
-                );
-              }
-            }
-            console.log(
-              `[ ${moment().format('HH:mm:ss')} ] All tasks completed!`.cyan
-            );
-          }
-        } while (totalClaim > availableBoxes);
-      } else if (method === '3') {
-        console.log(`[ ${moment().format('HH:mm:ss')} ] Please wait...`.yellow);
-        const claimLogin = await dailyLogin(token, getKeypair(privateKey));
-        if (claimLogin) {
-          console.log(
-            `[ ${moment().format(
-              'HH:mm:ss'
-            )} ] Daily login has been success! Status: ${
-              claimLogin.status
-            } | Accumulative Days: ${claimLogin.data.accumulative_days}`.green
-          );
-        }
-        console.log(
-          `[ ${moment().format('HH:mm:ss')} ] All tasks completed!`.cyan
-        );
-      } else {
-        throw new Error('Invalid input method selected'.red);
-      }
-    } else {
-      console.log(
-        `There might be errors if you don't have sufficient balance or the RPC is down. Please ensure your balance is sufficient and your connection is stable`
-          .red
-      );
-    }
-  } catch (error) {
-    console.log(`Error processing private key: ${error}`.red);
-  }
-  console.log('');
 }
 
 async function dailyClaim(token) {
@@ -314,6 +217,72 @@ async function dailyLogin(token, keypair, retries = 3) {
   }
 }
 
+async function processPrivateKey(privateKey) {
+  try {
+    const publicKey = getKeypair(privateKey).publicKey.toBase58();
+    const token = await getToken(privateKey);
+    const profile = await getProfile(token);
+
+    if (profile.wallet_balance > 0) {
+      const balance = profile.wallet_balance / solana.LAMPORTS_PER_SOL;
+      const ringBalance = profile.ring;
+      const availableBoxes = profile.ring_monitor;
+
+      console.log(`Here are your details:`.green);
+      console.log(`Solana Balance: ${balance} SOL`.green);
+      console.log(`Ring Balance: ${ringBalance}`.green);
+      console.log(`Available Box(es): ${availableBoxes}`.green);
+      console.log('');
+
+      // 1. انجام لاگین روزانه
+      console.log(`[ ${moment().format('HH:mm:ss')} ] Please wait...`.yellow);
+      await dailyLogin(token, getKeypair(privateKey));
+      console.log(`[ ${moment().format('HH:mm:ss')} ] Daily login completed!`.cyan);
+
+      // 2. کلیم روزانه
+      console.log(`[ ${moment().format('HH:mm:ss')} ] Please wait...`.yellow);
+      await dailyClaim(token);
+      console.log(`[ ${moment().format('HH:mm:ss')} ] Daily claim completed!`.cyan);
+
+      // 3. باز کردن باکس‌ها
+      let totalClaim;
+      do {
+        totalClaim = Math.min(
+          availableBoxes,
+          readlineSync.keyInYNStrict(`Do you want to open boxes? (Max: ${availableBoxes})`)
+            ? await readlineSync.question(`How many boxes do you want to open? (Maximum is: ${availableBoxes}): `)
+            : 0
+        );
+
+        if (totalClaim > availableBoxes) {
+          console.log(`You cannot open more boxes than available`.red);
+        } else if (isNaN(totalClaim)) {
+          console.log(`Please enter a valid number`.red);
+        } else {
+          console.log(`[ ${moment().format('HH:mm:ss')} ] Please wait...`.yellow);
+          for (let i = 0; i < totalClaim; i++) {
+            const openedBox = await openMysteryBox(token, getKeypair(privateKey));
+            if (openedBox.data.success) {
+              console.log(
+                `[ ${moment().format('HH:mm:ss')} ] Box opened successfully! Status: ${openedBox.status} | Amount: ${openedBox.data.amount}`.green
+              );
+            }
+          }
+          console.log(`[ ${moment().format('HH:mm:ss')} ] All tasks completed!`.cyan);
+        }
+      } while (totalClaim > availableBoxes);
+    } else {
+      console.log(
+        `There might be errors if you don't have sufficient balance or the RPC is down. Please ensure your balance is sufficient and your connection is stable`
+          .red
+      );
+    }
+  } catch (error) {
+    console.log(`Error processing private key: ${error}`.red);
+  }
+  console.log('');
+}
+
 (async () => {
   try {
     displayHeader();
@@ -321,18 +290,14 @@ async function dailyLogin(token, keypair, retries = 3) {
       const privateKey = PRIVATE_KEYS[i];
       await processPrivateKey(privateKey);
       if (i < PRIVATE_KEYS.length - 1) {
-        const continueNext = readlineSync.keyInYNStrict(
-          `Do you want to process next private key?`
-        );
+        const continueNext = readlineSync.keyInYNStrict(`Do you want to process next private key?`);
         if (!continueNext) break;
       }
     }
-    console.log('All private keys processed.'.cyan);
+    console.log('ONIXIA cares about your time!!'.magenta);
   } catch (error) {
     console.log(`Error in bot operation: ${error}`.red);
   } finally {
-    console.log(
-      'Thanks for having us! Subscribe: https://t.me/HappyCuanAirdrop'.magenta
-    );
+    console.log('edited by Onixia'.cyan);
   }
 })();
