@@ -56,7 +56,7 @@ sudo apt update & sudo apt upgrade -y
 1. Clone the repository:
 
    ```bash
-   https://github.com/Onixs50/sonic-odyssey-bot-EDITED-V.git
+   git clone https://github.com/Onixs50/sonic-odyssey-bot-EDITED-V.git
    ```
 
 2. Navigate into the project directory:
