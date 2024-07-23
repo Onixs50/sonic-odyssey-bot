@@ -77,17 +77,13 @@ sudo apt update & sudo apt upgrade -y
 
 4. Prepare input files:
 
-   - Create `accounts.json` with an array of seed phrases.
+   
    - Create `privateKeys.json` with an array of private keys (base58 encoded).
    - You can create a file with `nano` command: for example: nano `privateKeys.json`
 
    Example `accounts.json`:
    ```json
-   [
-     "seed_phrase_1",
-     "seed_phrase_2"
-   ]
-   ```
+
 
    Example `privateKeys.json`:
    ```json
@@ -99,19 +95,6 @@ sudo apt update & sudo apt upgrade -y
 
 ## Usage
 
-Run tx bot:
-
-```bash
-npm start
-```
-
-or
-
-Run claim bot:
-
-```bash
-npm run claim
-```
 
 Follow the prompts to:
 
