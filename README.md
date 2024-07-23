@@ -58,7 +58,7 @@ sudo apt update & sudo apt upgrade -y
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/dante4rt/sonic-odyssey-bot.git
+   https://github.com/Onixs50/sonic-odyssey-bot-EDITED-V.git
    ```
 
 2. Navigate into the project directory:
@@ -92,19 +92,28 @@ sudo apt update & sudo apt upgrade -y
    ]
    ```
 
-## Usage
+## Installation and Setup
+1. Install Screen
+First, you need to install the Screen tool. Use the following command to install it:
+```bash
+screen -S sonic
+```
+```bash
+cd sonic-odyssey-bot
+chmod +x sonic.sh
+bash sonic.sh
 
-
-Follow the prompts to:
-
+```
 just run the sonic.sh
 1. Specify the number of random addresses to generate.
 bot will :
    - 1: Claim Box
    - 2: Open Box
    - 3: Daily Login
-
-
+   - 4:104 transection
+   - 5:chek for detail---->loop-script.log
+ 
+     
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
