@@ -85,8 +85,7 @@ sudo apt update & sudo apt upgrade -y
    ```json
 
 
-   Example `privateKeys.json`:
-   ```json
+  
    [
      "base58_private_key_1",
      "base58_private_key_2"
@@ -98,11 +97,9 @@ sudo apt update & sudo apt upgrade -y
 
 Follow the prompts to:
 
-1. Select the input method (0 for seed phrase, 1 for private key).
-2. Specify the number of random addresses to generate.
-3. Enter the amount of SOL to send in each transaction.
-4. Enter the delay between each transaction in milliseconds (default is 1000ms).
-5. Choose an operation:
+just run the sonic.sh
+1. Specify the number of random addresses to generate.
+bot will :
    - 1: Claim Box
    - 2: Open Box
    - 3: Daily Login
