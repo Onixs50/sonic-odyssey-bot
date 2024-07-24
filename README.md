@@ -79,9 +79,8 @@ sudo apt update & sudo apt upgrade -y
    - Create `privateKeys.json` with an array of private keys (base58 encoded).
    - You can create a file with `nano` command: for example: nano `privateKeys.json`
 
-   Example `accounts.json`:
+   Example `privateKeys.json`:
    ```json
-
    [
      "base58_private_key_1",
      "base58_private_key_2"
