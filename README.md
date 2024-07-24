@@ -56,13 +56,13 @@ sudo apt update & sudo apt upgrade -y
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/Onixs50/sonic-odyssey-bot-EDITED-V.git
+   git clone https://github.com/Onixs50/sonic-odyssey-bot.git
    ```
 
 2. Navigate into the project directory:
 
    ```bash
-   cd sonic-odyssey-bot-EDITED-V
+   cd sonic-odyssey-bot
    ```
 
 3. Install dependencies:
@@ -95,7 +95,7 @@ First, you need to install the Screen tool. Use the following command to install
 screen -S sonic
 ```
 ```bash
-cd sonic-odyssey-bot-EDITED-V
+cd sonic-odyssey-bot
 chmod +x sonic.sh
 bash sonic.sh
 
