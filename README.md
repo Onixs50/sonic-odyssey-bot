@@ -82,8 +82,6 @@ sudo apt update & sudo apt upgrade -y
    Example `accounts.json`:
    ```json
 
-
-  
    [
      "base58_private_key_1",
      "base58_private_key_2"
