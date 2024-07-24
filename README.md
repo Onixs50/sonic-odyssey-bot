@@ -89,7 +89,7 @@ sudo apt update & sudo apt upgrade -y
 
 ## Installation and Setup
 1. Install Screen
-First, you need to install the Screen tool. Use the following command to install it:
+First, you need to install the Screen tool. Use the following command after that:
 ```bash
 screen -S sonic
 ```
