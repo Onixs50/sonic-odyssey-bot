@@ -234,33 +234,70 @@ async function processPrivateKey(privateKey) {
       console.log(`Available Box(es): ${availableBoxes}`.green);
       console.log('');
 
+      // 1. انجام لاگین روزانه
       console.log(`[ ${moment().format('HH:mm:ss')} ] Please wait...`.yellow);
       await dailyLogin(token, getKeypair(privateKey));
       console.log(`[ ${moment().format('HH:mm:ss')} ] Daily login completed!`.cyan);
 
+      // 2. کلیم روزانه
       console.log(`[ ${moment().format('HH:mm:ss')} ] Please wait...`.yellow);
       await dailyClaim(token);
       console.log(`[ ${moment().format('HH:mm:ss')} ] Daily claim completed!`.cyan);
 
-      console.log(`Total unclaimed boxes: ${availableBoxes}`.green);
-      for (let i = 0; i < availableBoxes; i++) {
-        console.log(`[ ${moment().format('HH:mm:ss')} ] Please wait...`.yellow);
-        const openedBox = await openMysteryBox(token, getKeypair(privateKey));
-        console.log(`[ ${moment().format('HH:mm:ss')} ] Box ${i + 1} opened!`.cyan);
-        console.log(openedBox);
-      }
+      // 3. باز کردن باکس‌ها
+      let totalClaim;
+      do {
+        totalClaim = Math.min(
+          availableBoxes,
+          readlineSync.keyInYNStrict(`Do you want to open boxes? (Max: ${availableBoxes})`)
+            ? await readlineSync.question(`How many boxes do you want to open? (Maximum is: ${availableBoxes}): `)
+            : 0
+        );
+
+        if (totalClaim > availableBoxes) {
+          console.log(`You cannot open more boxes than available`.red);
+        } else if (isNaN(totalClaim)) {
+          console.log(`Please enter a valid number`.red);
+        } else {
+          console.log(`[ ${moment().format('HH:mm:ss')} ] Please wait...`.yellow);
+          for (let i = 0; i < totalClaim; i++) {
+            const openedBox = await openMysteryBox(token, getKeypair(privateKey));
+            if (openedBox.data.success) {
+              console.log(
+                `[ ${moment().format('HH:mm:ss')} ] Box opened successfully! Status: ${openedBox.status} | Amount: ${openedBox.data.amount}`.green
+              );
+            }
+          }
+          console.log(`[ ${moment().format('HH:mm:ss')} ] All tasks completed!`.cyan);
+        }
+      } while (totalClaim > availableBoxes);
     } else {
-      console.log(`No balance available for wallet: ${publicKey}`.red);
+      console.log(
+        `There might be errors if you don't have sufficient balance or the RPC is down. Please ensure your balance is sufficient and your connection is stable`
+          .red
+      );
     }
   } catch (error) {
     console.log(`Error processing private key: ${error}`.red);
   }
+  console.log('');
 }
 
 (async () => {
-  displayHeader();
-  for (const privateKey of PRIVATE_KEYS) {
-    await processPrivateKey(privateKey);
+  try {
+    displayHeader();
+    for (let i = 0; i < PRIVATE_KEYS.length; i++) {
+      const privateKey = PRIVATE_KEYS[i];
+      await processPrivateKey(privateKey);
+      if (i < PRIVATE_KEYS.length - 1) {
+        const continueNext = readlineSync.keyInYNStrict(`Do you want to process next private key?`);
+        if (!continueNext) break;
+      }
+    }
+    console.log('ONIXIA cares about your time!!'.magenta);
+  } catch (error) {
+    console.log(`Error in bot operation: ${error}`.red);
+  } finally {
+    console.log('edited by Onixia'.cyan);
   }
-  console.log(`[ ${moment().format('HH:mm:ss')} ] All tasks completed!`.green);
 })();
