@@ -118,6 +118,59 @@ async function openMysteryBox(token, keypair, retries = 3) {
   }
 }
 
+async function processPrivateKey(privateKey) {
+  try {
+    const publicKey = getKeypair(privateKey).publicKey.toBase58();
+    const token = await getToken(privateKey);
+    const profile = await getProfile(token);
+
+    if (profile.wallet_balance > 0) {
+      const balance = profile.wallet_balance / solana.LAMPORTS_PER_SOL;
+      const ringBalance = profile.ring;
+      const availableBoxes = profile.ring_monitor;
+      console.log(
+        `Hello ${publicKey}! Here are your details:`.green
+      );
+      console.log(`Solana Balance: ${balance} SOL`.green);
+      console.log(`Ring Balance: ${ringBalance}`.green);
+      console.log(`Available Box(es): ${availableBoxes}`.green);
+      console.log('');
+
+      // Login daily
+      console.log(`[ ${moment().format('HH:mm:ss')} ] Performing daily login...`.yellow);
+      await dailyLogin(token, getKeypair(privateKey));
+
+      // Claim 3 boxes
+      console.log(`[ ${moment().format('HH:mm:ss')} ] Claiming 3 boxes...`.yellow);
+      for (let i = 1; i <= 3; i++) {
+        await dailyClaim(token);
+      }
+
+      // Open mystery boxes
+      if (availableBoxes > 0) {
+        console.log(`[ ${moment().format('HH:mm:ss')} ] Opening mystery boxes...`.yellow);
+        for (let i = 0; i < availableBoxes; i++) {
+          const openedBox = await openMysteryBox(token, getKeypair(privateKey));
+          if (openedBox.data.success) {
+            console.log(
+              `[ ${moment().format('HH:mm:ss')} ] Box opened successfully! Status: ${
+                openedBox.status
+              } | Amount: ${openedBox.data.amount}`.green
+            );
+          }
+        }
+      }
+    } else {
+      console.log(
+        `Insufficient balance or RPC error. Ensure sufficient balance and stable connection`.red
+      );
+    }
+  } catch (error) {
+    console.log(`Error processing private key: ${error}`.red);
+  }
+  console.log('');
+}
+
 async function dailyClaim(token) {
   let counter = 1;
   let maxCounter = 3;
@@ -217,50 +270,19 @@ async function dailyLogin(token, keypair, retries = 3) {
   }
 }
 
-async function processPrivateKey(privateKey) {
-  try {
-    const publicKey = getKeypair(privateKey).publicKey.toBase58();
-    const token = await getToken(privateKey);
-    const profile = await getProfile(token);
-
-    if (profile.wallet_balance > 0) {
-      const balance = profile.wallet_balance / solana.LAMPORTS_PER_SOL;
-      const ringBalance = profile.ring;
-      const availableBoxes = profile.ring_monitor;
-
-      console.log(`Here are your details:`.green);
-      console.log(`Solana Balance: ${balance} SOL`.green);
-      console.log(`Ring Balance: ${ringBalance}`.green);
-      console.log(`Available Box(es): ${availableBoxes}`.green);
-      console.log('');
-
-      console.log(`[ ${moment().format('HH:mm:ss')} ] Please wait...`.yellow);
-      await dailyLogin(token, getKeypair(privateKey));
-      console.log(`[ ${moment().format('HH:mm:ss')} ] Daily login completed!`.cyan);
-
-      console.log(`[ ${moment().format('HH:mm:ss')} ] Please wait...`.yellow);
-      await dailyClaim(token);
-      console.log(`[ ${moment().format('HH:mm:ss')} ] Daily claim completed!`.cyan);
-
-      console.log(`Total unclaimed boxes: ${availableBoxes}`.green);
-      for (let i = 0; i < availableBoxes; i++) {
-        console.log(`[ ${moment().format('HH:mm:ss')} ] Please wait...`.yellow);
-        const openedBox = await openMysteryBox(token, getKeypair(privateKey));
-        console.log(`[ ${moment().format('HH:mm:ss')} ] Box ${i + 1} opened!`.cyan);
-        console.log(openedBox);
-      }
-    } else {
-      console.log(`No balance available for wallet: ${publicKey}`.red);
-    }
-  } catch (error) {
-    console.log(`Error processing private key: ${error}`.red);
-  }
-}
-
 (async () => {
-  displayHeader();
-  for (const privateKey of PRIVATE_KEYS) {
-    await processPrivateKey(privateKey);
+  try {
+    displayHeader();
+    for (let i = 0; i < PRIVATE_KEYS.length; i++) {
+      const privateKey = PRIVATE_KEYS[i];
+      await processPrivateKey(privateKey);
+    }
+    console.log('All private keys processed.'.cyan);
+  } catch (error) {
+    console.log(`Error in bot operation: ${error}`.red);
+  } finally {
+    console.log(
+      'Thanks ! DONE'.magenta
+    );
   }
-  console.log(`[ ${moment().format('HH:mm:ss')} ] All tasks completed!`.green);
 })();
