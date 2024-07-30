@@ -19,7 +19,7 @@ const randomFloatFromInterval = (min, max) => (Math.random() * (max - min) + min
     throw new Error(colors.red('privateKeys.json is not set correctly or is empty'));
   }
 
-  const addressCount = 104;
+  const addressCount = 104; // تعداد آدرس‌های تصادفی
   const randomAddresses = generateRandomAddresses(addressCount);
 
   let rentExemptionAmount;
@@ -30,6 +30,9 @@ const randomFloatFromInterval = (min, max) => (Math.random() * (max - min) + min
     console.error(colors.red('Failed to fetch minimum balance for rent exemption. Using default value.'));
     rentExemptionAmount = 0.001;
   }
+
+  const amountToSend = 0.001; // مقدار پیش‌فرض ارسال
+  const delayBetweenTx = 20000; // تأخیر بین تراکنش‌ها به میلی‌ثانیه
 
   for (const [index, privateKey] of privateKeys.entries()) {
     const fromKeypair = getKeypairFromPrivateKey(privateKey);
@@ -42,7 +45,7 @@ const randomFloatFromInterval = (min, max) => (Math.random() * (max - min) + min
       let amountToSend;
 
       do {
-        amountToSend = parseFloat(randomFloatFromInterval(0.001, 0.005));
+        amountToSend = parseFloat(randomFloatFromInterval(0.001, 0.0012));
       } while (amountToSend < rentExemptionAmount);
 
       try {
@@ -53,7 +56,6 @@ const randomFloatFromInterval = (min, max) => (Math.random() * (max - min) + min
         console.error(colors.red(`Failed to send SOL to ${address}:`), error);
       }
 
-      const delayBetweenTx = randomIntFromInterval(20000, 20000); // 20 ثانیه
       await delay(delayBetweenTx);
     }
 
